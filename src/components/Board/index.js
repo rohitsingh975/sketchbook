@@ -8,6 +8,9 @@ const Board = () => {
 
   const canvasRef = useRef(null)
   const shouldDraw = useRef(false)
+  const drawHistory = useRef([])
+  const historyPointer = useRef(0)
+
   const {activeMenuItem, actionMenuItem} = useSelector((state) => state.menu)
   const {color, size} = useSelector((state) => state.toolbox[activeMenuItem])
 
@@ -23,6 +26,11 @@ const Board = () => {
       anchor.href = URL
       anchor.download = 'sketch.jpg'
       anchor.click()
+    } else if (actionMenuItem === MENU_ITEMS.UNDO || actionMenuItem === MENU_ITEMS.REDO) {
+      if (historyPointer.current > 0 && actionMenuItem === MENU_ITEMS.UNDO) historyPointer.current -= 1
+      if (historyPointer.current < drawHistory.current.length -1 && actionMenuItem === MENU_ITEMS.REDO) historyPointer.current += 1
+      const imageData = drawHistory.current[historyPointer.current]
+      context.putImageData(imageData, 0, 0)
     }
     dispatch(actionItemClick(null))
   }, [actionMenuItem])
@@ -73,6 +81,9 @@ const Board = () => {
 
     const handleMouseUp = (e) => {
       shouldDraw.current = false
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+      drawHistory.current.push(imageData)
+      historyPointer.current = drawHistory.current.length - 1
     }
 
     canvas.addEventListener('mousedown', handleMouseDown)
